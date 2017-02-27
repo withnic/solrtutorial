@@ -1,0 +1,36 @@
+- hosts: vagrants
+  become: yes
+  remote_user: ubuntu
+  gather_facts: no
+  vars:
+    solr_var: "6.4.1"
+  tasks:
+    - name: install jre
+      apt: name=default-jre update_cache=yes
+    
+    - name: install jdk
+      apt: name=default-jdk update_cache=yes
+    
+    - name: download solr
+      get_url:
+        url: http://ftp.riken.jp/net/apache/lucene/solr/{{solr_var}}/solr-{{solr_var}}.tgz
+        dest: /tmp/solr-{{solr_var}}.tgz
+    
+    - name: unarchive solr files
+      unarchive:
+        src: /tmp/solr-{{solr_var}}.tgz
+        dest: /home/ubuntu
+        remote_src: True
+    
+    - name: change solrDir permission
+      file:
+        path: /home/ubuntu/solr-{{solr_var}}
+        owner: ubuntu
+        group: ubuntu
+        recurse: True
+        state: directory
+
+    - name: solr start
+      become: True
+      become_user: ubuntu
+      command: /home/ubuntu/solr-{{solr_var}}/bin/solr start -e cloud -noprompt
